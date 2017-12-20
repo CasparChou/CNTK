@@ -20,13 +20,15 @@ def create_grocery_mappings(grocery_folder):
 if __name__ == '__main__':
     base_folder = os.path.dirname(os.path.abspath(__file__))
 
-    sys.path.append(os.path.join(base_folder, "..", "..", "DataSets", "Grocery"))
-    from install_grocery import download_grocery_data
-    download_grocery_data()
+    sys.path.append(os.path.join(base_folder, "..", "..", "DataSets", "Pascal"))
+    from install_pascalvoc import download_pascal_data
+    download_pascal_data()
 
     sys.path.append(os.path.join(base_folder, "..", "..", "..", "..", "PretrainedModels"))
     from download_model import download_model_by_name
-    download_model_by_name("AlexNet_ImageNet_Caffe")
+    download_model_by_name("VGG16_ImageNet_Caffe")
 
-    print("Creating mapping files for Grocery data set..")
-    create_grocery_mappings(base_folder)
+    sys.path.append(os.path.join(base_folder, "..", "..", "DataSets", "Pascal", "mappings"))
+    from mapping import create_pascal_mappings
+    print("Creating mapping files for Pascal data set..")
+    create_pascal_mappings(os.path.join(base_folder, "..", "..", "DataSets", "Pascal", "mappings"))
