@@ -7,6 +7,7 @@
 import os
 import numpy as np
 import cntk
+from tqdm import tqdm # pip install tqdm
 from cntk import input_variable, Axis
 from utils.map_helpers import evaluate_detections
 from utils.plot_helpers import load_resize_and_pad
@@ -82,6 +83,7 @@ def compute_test_set_aps(eval_model, cfg):
     # evaluate test images and write netwrok output to file
     print("Evaluating Faster R-CNN model for %s images." % num_test_images)
     all_gt_infos = {key: [] for key in classes}
+    pbar = tqdm(total=num_test_images)
     for img_i in range(0, num_test_images):
         mb_data = minibatch_source.next_minibatch(1, input_map=input_map)
 
@@ -114,9 +116,8 @@ def compute_test_set_aps(eval_model, cfg):
         for cls_j in range(1, cfg["DATA"].NUM_CLASSES):
             coords_score_label_for_cls = coords_score_label[np.where(coords_score_label[:,-1] == cls_j)]
             all_boxes[cls_j][img_i] = coords_score_label_for_cls[:,:-1].astype(np.float32, copy=False)
-
-        if (img_i+1) % 100 == 0:
-            print("Processed {} samples".format(img_i+1))
+        pbar.update(1)
+    pbar.close()
 
     # calculate mAP
     aps = evaluate_detections(all_boxes, all_gt_infos, classes,
