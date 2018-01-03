@@ -32,6 +32,8 @@ from utils.proposal_helpers import ProposalProvider
 from FastRCNN.FastRCNN_train import clone_model, clone_conv_layers, create_fast_rcnn_predictor, \
     create_detection_losses
 
+from tqdm import tqdm # pip install tqdm
+
 def prepare(cfg, use_arg_parser=True):
     cfg.MB_SIZE = 1
     cfg.NUM_CHANNELS = 3
@@ -564,15 +566,16 @@ def train_model(image_input, roi_input, dims_input, loss, pred_error,
         input_map[od_minibatch_source.dims_si] = dims_input
 
     progress_printer = ProgressPrinter(tag='Training', num_epochs=epochs_to_train, gen_heartbeat=True)
+    epoch_pbar = tqdm(total=epochs_to_train)
     for epoch in range(epochs_to_train):       # loop over epochs
         sample_count = 0
+        sample_pbar = tqdm(total=cfg["DATA"].NUM_TRAIN_IMAGES)
         while sample_count < cfg["DATA"].NUM_TRAIN_IMAGES:  # loop over minibatches in the epoch
             data = od_minibatch_source.next_minibatch(min(cfg.MB_SIZE, cfg["DATA"].NUM_TRAIN_IMAGES-sample_count), input_map=input_map)
-            trainer.train_minibatch(data)                                    # update model with it
+            trainer.train_minibatch(data)    # update model with it
             sample_count += trainer.previous_minibatch_sample_count          # count samples processed so far
-            progress_printer.update_with_trainer(trainer, with_metric=True)  # log progress
-            if sample_count % 100 == 0:
-                print("Processed {} samples".format(sample_count))
-
+            sample_pbar.update(1)
+        sample_pbar.close()
         progress_printer.epoch_summary(with_metric=True)
-
+        epoch_pbar.update(1)
+    epoch_pbar.close()
