@@ -17,6 +17,7 @@ from cntk import input_variable, Axis
 from utils.nms_wrapper import apply_nms_to_single_image_results
 from utils.rpn.bbox_transform import regress_rois
 import cv2 # pip install opencv-python
+from tqdm import tqdm
 
 available_font = "arial.ttf"
 try:
@@ -141,8 +142,10 @@ def plot_test_set_results(evaluator, num_images_to_plot, results_base_path, cfg)
     img_shape = (cfg.NUM_CHANNELS, cfg.IMAGE_HEIGHT, cfg.IMAGE_WIDTH)
 
     print("Plotting results from for %s images." % num_images_to_plot)
+    pbar = tqdm(total=num_images_to_plot)
     for i in range(0, num_images_to_plot):
         img_path = img_file_names[i]
+        pbar.set_description(img_path)
         out_cls_pred, out_rpn_rois, out_bbox_regr, dims = evaluator.process_image_detailed(img_path)
         labels = out_cls_pred.argmax(axis=1)
         scores = out_cls_pred.max(axis=1)
@@ -174,7 +177,8 @@ def plot_test_set_results(evaluator, num_images_to_plot, results_base_path, cfg)
                                    draw_negative_rois=cfg.DRAW_NEGATIVE_ROIS,
                                    decision_threshold=cfg.RESULTS_BGR_PLOT_THRESHOLD)
         imsave("{}/{}_regr_{}".format(results_base_path, i, os.path.basename(img_path)), img)
-
+        pbar.update(1)
+    pbar.close()
 ####################################
 # helper library
 ####################################
